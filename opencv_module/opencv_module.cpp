@@ -1,6 +1,6 @@
 #include <iostream>
-#include "core.hpp"
 #include "hal.hpp"
+#include "opencv_module.hpp"
 
 namespace cv
 {
@@ -19,6 +19,9 @@ namespace cv
 
     void erode(const Mat& src, Mat& dst, const Mat& kernel, int iterations, Point anchor)
     {
+        std::cout << "\nround: " << std::endl;
+        std::cout << cv::hal::round(1.7) << std::endl;
+
         Size kernelSize;
         kernelSize.width = kernelSize.height = iterations;
 
@@ -30,26 +33,4 @@ namespace cv
 
         std::cout << "Built-in erode" << std::endl;
     }
-}
-
-int main(int argc, const char* argv[])
-{
-    if (argc == 2)
-        cv::loadHalImpl(argv[1]);
-
-    std::cout << cv::getHalInfo() << std::endl;
-
-    cv::Mat src, dst, kernel;
-
-    std::cout << "\nresize nearest:" << std::endl;
-    cv::resize(src, dst, 0);
-
-    std::cout << "\nresize linear:" << std::endl;
-    resize(src, dst, 1);
-
-    std::cout << "\nerode:" << std::endl;
-    cv::erode(src, dst, kernel, 1, cv::Point());
-
-    std::cout << "\nround: " << std::endl;
-    std::cout << cv::hal::round(1.7) << std::endl;
 }

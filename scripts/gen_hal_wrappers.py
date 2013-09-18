@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from string import Template
 import CppHeaderParser
 
@@ -39,13 +40,13 @@ ${macros_list}
 hal_hpp_file_templ = Template(\
 R"""// This is generated file. Do not edit it.
 
-#ifndef HAL_HPP
-#define HAL_HPP
+#ifndef OPENCV_HAL_HPP
+#define OPENCV_HAL_HPP
 
 #include <cstdlib>
 #include <cstdio>
 #include <string>
-#include "core.hpp"
+#include "opencv_module.hpp"
 
 // OpenCV supports both dynamically-loadable and statically-linked HALs.
 
@@ -471,26 +472,39 @@ class HalWrapperGenerator(object):
                                              funcs_ptr_clear_list='\n'.join(funcs_ptr_clear_list),
                                              funcs_load_list='\n'.join(funcs_load_list))
 
-    def gen(self):
+    def gen(self, hal_interface_h_file_name, hal_impl_templ_h_file_name, hal_hpp_file_name, hal_cpp_file_name):
         self.clear()
 
-        halImplHeader = CppHeaderParser.CppHeader('hal_interface.h')
+        halImplHeader = CppHeaderParser.CppHeader(hal_interface_h_file_name)
         self.parse_funcs_list(halImplHeader.functions)
 
-        hal_impl_templ_h_file = open('hal_impl_templ.h', 'w')
+        hal_impl_templ_h_file = open(hal_impl_templ_h_file_name, 'w')
         hal_impl_templ_h_file.write(self.gen_hal_impl_templ_h_file())
         hal_impl_templ_h_file.close()
 
-        hal_hpp_file = open('hal.hpp', 'w')
+        hal_hpp_file = open(hal_hpp_file_name, 'w')
         hal_hpp_file.write(self.gen_hal_hpp_file())
         hal_hpp_file.close()
 
-        hal_cpp_file = open('hal.cpp', 'w')
+        hal_cpp_file = open(hal_cpp_file_name, 'w')
         hal_cpp_file.write(self.gen_hal_cpp_file())
         hal_cpp_file.close()
 
 
 
 if __name__ == '__main__':
+    hal_interface_h_file_name = 'hal_interface.h'
+    hal_impl_templ_h_file_name = 'hal_impl_templ.h'
+    hal_hpp_file_name = 'hal.hpp'
+    hal_cpp_file_name = 'hal.cpp'
+    if len(sys.argv) > 1:
+        hal_interface_h_file_name = sys.argv[1]
+    if len(sys.argv) > 2:
+        hal_impl_templ_h_file_name = sys.argv[2]
+    if len(sys.argv) > 3:
+        hal_hpp_file_name = sys.argv[3]
+    if len(sys.argv) > 4:
+        hal_cpp_file_name = sys.argv[4]
+
     generator = HalWrapperGenerator()
-    generator.gen()
+    generator.gen(hal_interface_h_file_name, hal_impl_templ_h_file_name, hal_hpp_file_name, hal_cpp_file_name)

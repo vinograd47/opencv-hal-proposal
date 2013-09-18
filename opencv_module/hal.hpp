@@ -1,12 +1,12 @@
 // This is generated file. Do not edit it.
 
-#ifndef HAL_HPP
-#define HAL_HPP
+#ifndef OPENCV_HAL_HPP
+#define OPENCV_HAL_HPP
 
 #include <cstdlib>
 #include <cstdio>
 #include <string>
-#include "core.hpp"
+#include "opencv_module.hpp"
 
 // OpenCV supports both dynamically-loadable and statically-linked HALs.
 

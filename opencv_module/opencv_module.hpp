@@ -1,5 +1,5 @@
-#ifndef CORE_HPP
-#define CORE_HPP
+#ifndef HAL_USER_HPP
+#define HAL_USER_HPP
 
 #include <cstdlib>
 #include <string>
@@ -63,6 +63,13 @@ namespace cv
     {
         return (int) (val + 0.5);
     }
+}
+
+namespace cv
+{
+    void resize(const Mat& src, Mat& dst, int interpolation);
+
+    void erode(const Mat& src, Mat& dst, const Mat& kernel, int iterations, Point anchor);
 }
 
 #endif
