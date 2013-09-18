@@ -1,7 +1,7 @@
 // HAL implementation
 
-#include "hal_impl.h"
 #include <iostream>
+#include "hal_impl.h"
 
 CvHalStatus cvhal_init()
 {

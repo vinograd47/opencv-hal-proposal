@@ -1,18 +1,21 @@
 // This is generated file. Do not edit it.
 
-#ifndef OPENCV_HAL_HPP
-#define OPENCV_HAL_HPP
+#ifndef __OPENCV_HAL_HPP__
+#define __OPENCV_HAL_HPP__
 
-#include <cstdlib>
-#include <cstdio>
-#include <string>
-#include "opencv_module.hpp"
+#if !defined __OPENCV_BUILD
+#   error "This is a private header"
+#endif
+
+#include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/core/utility.hpp>
 
 // OpenCV supports both dynamically-loadable and statically-linked HALs.
 
-#if defined(CV_HAL_STATIC)
+#if defined CV_HAL_STATIC
 #   include "hal_impl.h"
-#elif defined(CV_HAL_DYNAMIC)
+#elif defined CV_HAL_DYNAMIC
 #   include "hal_interface.h"
 #endif
 
@@ -24,11 +27,11 @@ namespace cv { namespace hal {
 // Dynamic mode calls HAL functions through pointers.
 
 namespace detail {
-    #if defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_DYNAMIC
         extern bool isInitialized;
         void initHalPointers();
 
-            typedef CvHalStatus (*cvhal_hamming_dist_func_ptr_t)(unsigned char * a, unsigned char * b, size_t len, int * result, CvHalContext * context);
+        typedef CvHalStatus (*cvhal_hamming_dist_func_ptr_t)(unsigned char * a, unsigned char * b, size_t len, int * result, CvHalContext * context);
         extern cvhal_hamming_dist_func_ptr_t cvhal_hamming_dist_func_ptr;
 
         typedef CvHalStatus (*cvhal_resize_func_ptr_t)(CvHalMat * src, CvHalMat * dst, int interpolation, CvHalContext * context);
@@ -38,7 +41,7 @@ namespace detail {
         extern cvhal_erode_func_ptr_t cvhal_erode_func_ptr;
     #endif
 
-    #if defined(CV_HAL_STATIC) || defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_STATIC || defined CV_HAL_DYNAMIC
         static inline CvHalMat toCvHalMat(const Mat& mat)
         {
             CvHalMat hal_mat;
@@ -46,19 +49,22 @@ namespace detail {
             hal_mat.step = mat.step;
             hal_mat.rows = mat.rows;
             hal_mat.cols = mat.cols;
-            hal_mat.depth = mat.depth;
-            hal_mat.channels = mat.channels;
-            hal_mat.datastart = mat.data;
-            hal_mat.xoff = 0;
-            hal_mat.yoff = 0;
+            hal_mat.depth = mat.depth();
+            hal_mat.channels = mat.channels();
+            hal_mat.datastart = mat.datastart;
+            Size wholeSize;
+            Point ofs;
+            mat.locateROI(wholeSize, ofs);
+            hal_mat.xoff = ofs.x;
+            hal_mat.yoff = ofs.y;
             return hal_mat;
         }
 
         static inline CvHalContext getContext()
         {
             CvHalContext context;
-            context.opencv_version = 30;
-            context.num_threads = -1;
+            context.opencv_version = CV_VERSION_EPOCH * 100 + CV_VERSION_MAJOR * 10 + CV_VERSION_MINOR;
+            context.num_threads = getNumThreads();
             return context;
         }
     #endif
@@ -70,10 +76,15 @@ namespace detail {
 
 static inline bool hamming_dist(unsigned char * a, unsigned char * b, size_t len, int * result)
 {
-#if (defined(CV_HAL_STATIC) && !defined(CV_HAL_HAS_HAMMING_DIST)) || (!defined(CV_HAL_STATIC) && !defined(CV_HAL_DYNAMIC))
+    (void) a;
+    (void) b;
+    (void) len;
+    (void) result;
+
+#if (defined CV_HAL_STATIC && !defined CV_HAL_HAS_HAMMING_DIST) || (!defined CV_HAL_STATIC && !defined CV_HAL_DYNAMIC)
     return false;
 #else
-    #if defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
             detail::initHalPointers();
 
@@ -85,7 +96,7 @@ static inline bool hamming_dist(unsigned char * a, unsigned char * b, size_t len
 
     CvHalContext context = detail::getContext();
 
-    #if defined(CV_HAL_STATIC)
+    #if defined CV_HAL_STATIC
         status = cvhal_hamming_dist(a, b, len, result, &context);
     #else
         status = detail::cvhal_hamming_dist_func_ptr(a, b, len, result, &context);
@@ -97,10 +108,14 @@ static inline bool hamming_dist(unsigned char * a, unsigned char * b, size_t len
 
 static inline bool resize(const Mat & src, const Mat & dst, int interpolation)
 {
-#if (defined(CV_HAL_STATIC) && !defined(CV_HAL_HAS_RESIZE)) || (!defined(CV_HAL_STATIC) && !defined(CV_HAL_DYNAMIC))
+    (void) src;
+    (void) dst;
+    (void) interpolation;
+
+#if (defined CV_HAL_STATIC && !defined CV_HAL_HAS_RESIZE) || (!defined CV_HAL_STATIC && !defined CV_HAL_DYNAMIC)
     return false;
 #else
-    #if defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
             detail::initHalPointers();
 
@@ -114,7 +129,7 @@ static inline bool resize(const Mat & src, const Mat & dst, int interpolation)
     CvHalMat hal_dst = detail::toCvHalMat(dst);
     CvHalContext context = detail::getContext();
 
-    #if defined(CV_HAL_STATIC)
+    #if defined CV_HAL_STATIC
         status = cvhal_resize(&hal_src, &hal_dst, interpolation, &context);
     #else
         status = detail::cvhal_resize_func_ptr(&hal_src, &hal_dst, interpolation, &context);
@@ -126,10 +141,16 @@ static inline bool resize(const Mat & src, const Mat & dst, int interpolation)
 
 static inline bool erode(const Mat & src, const Mat & dst, unsigned char * kernel, Size kernelSize, Point anchor)
 {
-#if (defined(CV_HAL_STATIC) && !defined(CV_HAL_HAS_ERODE)) || (!defined(CV_HAL_STATIC) && !defined(CV_HAL_DYNAMIC))
+    (void) src;
+    (void) dst;
+    (void) kernel;
+    (void) kernelSize;
+    (void) anchor;
+
+#if (defined CV_HAL_STATIC && !defined CV_HAL_HAS_ERODE) || (!defined CV_HAL_STATIC && !defined CV_HAL_DYNAMIC)
     return false;
 #else
-    #if defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
             detail::initHalPointers();
 
@@ -143,7 +164,7 @@ static inline bool erode(const Mat & src, const Mat & dst, unsigned char * kerne
     CvHalMat hal_dst = detail::toCvHalMat(dst);
     CvHalContext context = detail::getContext();
 
-    #if defined(CV_HAL_STATIC)
+    #if defined CV_HAL_STATIC
         status = cvhal_erode(&hal_src, &hal_dst, kernel, &kernelSize.width, &anchor.x, &context);
     #else
         status = detail::cvhal_erode_func_ptr(&hal_src, &hal_dst, kernel, &kernelSize.width, &anchor.x, &context);
@@ -157,11 +178,11 @@ static inline bool erode(const Mat & src, const Mat & dst, unsigned char * kerne
 
 static inline int round(double val)
 {
-#if defined(CV_HAL_HAS_ROUND)
+#if defined CV_HAL_HAS_ROUND
     return cvhal_round(val);
 #else
     // default implementation
-    printf("built-in round\n");
+    std::cout << "built-in round" << std::endl;
     return cvRound(val);
 #endif
 }

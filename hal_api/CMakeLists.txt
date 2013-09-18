@@ -8,5 +8,8 @@ if(GENERATE_HAL_WRAPPERS)
                       DEPENDS "${CMAKE_SOURCE_DIR}/scripts/gen_hal_wrappers.py" "${CMAKE_SOURCE_DIR}/hal_api/hal_interface.h"
                       COMMENT "Generate HAL wrappers"
                       VERBATIM
-                      SOURCES "${CMAKE_SOURCE_DIR}/scripts/gen_hal_wrappers.py" "${CMAKE_SOURCE_DIR}/hal_api/hal_interface.h")
+                      SOURCES "${CMAKE_SOURCE_DIR}/scripts/gen_hal_wrappers.py"
+                              "${CMAKE_SOURCE_DIR}/hal_api/hal_types.h"
+                              "${CMAKE_SOURCE_DIR}/hal_api/hal_interface.h"
+                              "${CMAKE_SOURCE_DIR}/hal_api/hal_impl_templ.h")
 endif()

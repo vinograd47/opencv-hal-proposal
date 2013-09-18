@@ -17,42 +17,36 @@ ${macros_list}
 
 // This functions can be used only in static build as inlined
 
-#ifndef CV_HAL_INLINE
-#  if defined __cplusplus
-#    define CV_HAL_INLINE static inline
-#  elif defined _MSC_VER
-#    define CV_HAL_INLINE __inline
-#  else
-#    define CV_HAL_INLINE static
-#  endif
-#endif
-
 //#define CV_HAL_HAS_ROUND
 //CV_HAL_INLINE int cvhal_round(double val)
 //{
 //    // implementation
 //}
 
-#endif""")
+#endif
+""")
 
 
 
 hal_hpp_file_templ = Template(\
 R"""// This is generated file. Do not edit it.
 
-#ifndef OPENCV_HAL_HPP
-#define OPENCV_HAL_HPP
+#ifndef __OPENCV_HAL_HPP__
+#define __OPENCV_HAL_HPP__
 
-#include <cstdlib>
-#include <cstdio>
-#include <string>
-#include "opencv_module.hpp"
+#if !defined __OPENCV_BUILD
+#   error "This is a private header"
+#endif
+
+#include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/core/utility.hpp>
 
 // OpenCV supports both dynamically-loadable and statically-linked HALs.
 
-#if defined(CV_HAL_STATIC)
+#if defined CV_HAL_STATIC
 #   include "hal_impl.h"
-#elif defined(CV_HAL_DYNAMIC)
+#elif defined CV_HAL_DYNAMIC
 #   include "hal_interface.h"
 #endif
 
@@ -64,14 +58,14 @@ namespace cv { namespace hal {
 // Dynamic mode calls HAL functions through pointers.
 
 namespace detail {
-    #if defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_DYNAMIC
         extern bool isInitialized;
         void initHalPointers();
 
-    ${funcs_ptr_decl_list}
+${funcs_ptr_decl_list}
     #endif
 
-    #if defined(CV_HAL_STATIC) || defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_STATIC || defined CV_HAL_DYNAMIC
         static inline CvHalMat toCvHalMat(const Mat& mat)
         {
             CvHalMat hal_mat;
@@ -79,19 +73,22 @@ namespace detail {
             hal_mat.step = mat.step;
             hal_mat.rows = mat.rows;
             hal_mat.cols = mat.cols;
-            hal_mat.depth = mat.depth;
-            hal_mat.channels = mat.channels;
-            hal_mat.datastart = mat.data;
-            hal_mat.xoff = 0;
-            hal_mat.yoff = 0;
+            hal_mat.depth = mat.depth();
+            hal_mat.channels = mat.channels();
+            hal_mat.datastart = mat.datastart;
+            Size wholeSize;
+            Point ofs;
+            mat.locateROI(wholeSize, ofs);
+            hal_mat.xoff = ofs.x;
+            hal_mat.yoff = ofs.y;
             return hal_mat;
         }
 
         static inline CvHalContext getContext()
         {
             CvHalContext context;
-            context.opencv_version = 30;
-            context.num_threads = -1;
+            context.opencv_version = CV_VERSION_EPOCH * 100 + CV_VERSION_MAJOR * 10 + CV_VERSION_MINOR;
+            context.num_threads = getNumThreads();
             return context;
         }
     #endif
@@ -107,18 +104,19 @@ ${funcs_wrap_impl_list}
 
 static inline int round(double val)
 {
-#if defined(CV_HAL_HAS_ROUND)
+#if defined CV_HAL_HAS_ROUND
     return cvhal_round(val);
 #else
     // default implementation
-    printf("built-in round\n");
+    std::cout << "built-in round" << std::endl;
     return cvRound(val);
 #endif
 }
 
 }} // namespace cv { namespace hal {
 
-#endif""")
+#endif
+""")
 
 
 
@@ -131,10 +129,12 @@ R"""        typedef CvHalStatus (*cvhal_${func_name}_func_ptr_t)(${param_hal_dec
 func_wrap_code_templ = Template(\
 R"""static inline bool ${func_name}(${param_ocv_decl_list})
 {
-#if (defined(CV_HAL_STATIC) && !defined(CV_HAL_HAS_${func_name_upper})) || (!defined(CV_HAL_STATIC) && !defined(CV_HAL_DYNAMIC))
+${param_unused_list}
+
+#if (defined CV_HAL_STATIC && !defined CV_HAL_HAS_${func_name_upper}) || (!defined CV_HAL_STATIC && !defined CV_HAL_DYNAMIC)
     return false;
 #else
-    #if defined(CV_HAL_DYNAMIC)
+    #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
             detail::initHalPointers();
 
@@ -146,7 +146,7 @@ R"""static inline bool ${func_name}(${param_ocv_decl_list})
 
 ${param_conversion_list}
 
-    #if defined(CV_HAL_STATIC)
+    #if defined CV_HAL_STATIC
         status = cvhal_${func_name}(${param_pass_list});
     #else
         status = detail::cvhal_${func_name}_func_ptr(${param_pass_list});
@@ -161,15 +161,17 @@ ${param_conversion_list}
 hal_cpp_file_templ = Template(\
 R"""// This is generated file. Do not edit it.
 
-#include "hal.hpp"
 #include <iostream>
 
-#if defined(CV_HAL_DYNAMIC)
+#if defined CV_HAL_DYNAMIC
 #   include <dlfcn.h>
 #   include <pthread.h>
 #endif
 
-#if defined(CV_HAL_STATIC)
+#include "hal.hpp"
+#include "opencv_module.hpp"
+
+#if defined CV_HAL_STATIC
 
 namespace
 {
@@ -185,7 +187,7 @@ namespace
             CvHalStatus status = cvhal_init();
             if (status != CV_HAL_SUCCESS)
             {
-                std::cerr << "cvhal_init failed \n" << std::endl;
+                std::cout << "cvhal_init failed \n" << std::endl;
                 return;
             }
         }
@@ -194,17 +196,17 @@ namespace
     StaticHalInitializer initializer;
 }
 
-void cv::loadHalImpl(const std::string&)
+void cv::loadHalImpl(const String&)
 {
-    std::cerr << "OpenCV was built with static HAL" << std::endl;
+    std::cout << "OpenCV was built with static HAL" << std::endl;
 }
 
-std::string cv::getHalInfo()
+cv::String cv::getHalInfo()
 {
     return cvhal_info();
 }
 
-#elif defined(CV_HAL_DYNAMIC)
+#elif defined CV_HAL_DYNAMIC
 
 // Pointers for dynamic mode
 
@@ -223,7 +225,7 @@ ${funcs_ptr_def_list}
 
 }}}
 
-void cv::loadHalImpl(const std::string& halLibName)
+void cv::loadHalImpl(const String& halLibName)
 {
     using namespace cv::hal::detail;
 
@@ -244,7 +246,7 @@ ${funcs_ptr_clear_list}
     if (!halLib)
     {
         const char* msg = dlerror();
-        std::cerr << "Can't load " << halLibName << " library :" << (msg ? msg : "") << "\n" << std::endl;
+        std::cout << "Can't load " << halLibName << " library :" << (msg ? msg : "") << "\n" << std::endl;
         isInitialized = true;
         return;
     }
@@ -252,7 +254,7 @@ ${funcs_ptr_clear_list}
     cvhal_init_func_ptr = (cvhal_init_func_ptr_t) dlsym(halLib, "cvhal_init");
     if (!cvhal_init_func_ptr)
     {
-        std::cerr << halLibName << " doesn't have cvhal_init function \n" << std::endl;
+        std::cout << halLibName << " doesn't have cvhal_init function \n" << std::endl;
         isInitialized = true;
         return;
     }
@@ -260,7 +262,7 @@ ${funcs_ptr_clear_list}
     CvHalStatus status = cvhal_init_func_ptr();
     if (status != CV_HAL_SUCCESS)
     {
-        std::cerr << "cvhal_init failed \n" << std::endl;
+        std::cout << "cvhal_init failed \n" << std::endl;
         isInitialized = true;
         return;
     }
@@ -268,7 +270,7 @@ ${funcs_ptr_clear_list}
     cvhal_info_func_ptr = (cvhal_info_func_ptr_t) dlsym(halLib, "cvhal_info");
     if (!cvhal_info_func_ptr)
     {
-        std::cerr << halLibName << " doesn't have cvhal_info function \n" << std::endl;
+        std::cout << halLibName << " doesn't have cvhal_info function \n" << std::endl;
         isInitialized = true;
         return;
     }
@@ -294,7 +296,7 @@ namespace
         const char* halLibName = getenv("OPENCV_HAL_MODULE");
         if (!halLibName)
         {
-            std::cerr << "OPENCV_HAL_MODULE env variable is empty \n" << std::endl;
+            std::cout << "OPENCV_HAL_MODULE env variable is empty \n" << std::endl;
             cv::hal::detail::isInitialized = true;
             return;
         }
@@ -308,7 +310,7 @@ void cv::hal::detail::initHalPointers()
     pthread_once(&once_control, init_routine);
 }
 
-std::string cv::getHalInfo()
+cv::String cv::getHalInfo()
 {
     using namespace cv::hal::detail;
 
@@ -323,17 +325,18 @@ std::string cv::getHalInfo()
 
 #else
 
-void cv::loadHalImpl(const std::string&)
+void cv::loadHalImpl(const String&)
 {
-    std::cerr << "OpenCV was built without HAL support" << std::endl;
+    std::cout << "OpenCV was built without HAL support" << std::endl;
 }
 
-std::string cv::getHalInfo()
+cv::String cv::getHalInfo()
 {
     return "No HAL";
 }
 
-#endif""")
+#endif
+""")
 
 
 
@@ -358,6 +361,13 @@ class ParamInfo(object):
             return ''
         else:
             return self.ocvType + ' ' + self.name
+
+    def gen_unused(self):
+        if self.halType == 'CvHalContext *':
+            return ''
+        else:
+            return '    (void) ' + self.name + ';'
+
 
     def gen_conversion(self):
         if self.halType == 'CvHalMat *':
@@ -397,19 +407,24 @@ class FuncInfo(object):
         return func_ptr_decl_templ.substitute(func_name=self.shortName, param_hal_decl_list=', '.join(param_hal_decl_list))
 
     def gen_wrap_impl(self):
-        param_ocv_decl_list=[]
+        param_ocv_decl_list = []
+        param_unused_list = []
         param_conversion_list = []
         param_pass_list = []
         for param in self.params:
             ocv_decl = param.gen_ocv_decl()
             if ocv_decl != '':
                 param_ocv_decl_list.append(ocv_decl)
+            unused = param.gen_unused()
+            if unused != '':
+                param_unused_list.append(unused)
             conversion = param.gen_conversion()
             if conversion != '':
                 param_conversion_list.append(conversion)
             param_pass_list.append(param.gen_pass())
         return func_wrap_code_templ.substitute(func_name=self.shortName, func_name_upper=self.shortName.upper(),
                                                param_ocv_decl_list=', '.join(param_ocv_decl_list),
+                                               param_unused_list='\n'.join(param_unused_list),
                                                param_conversion_list='\n'.join(param_conversion_list),
                                                param_pass_list=', '.join(param_pass_list))
 

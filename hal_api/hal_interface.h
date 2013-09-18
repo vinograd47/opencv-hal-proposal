@@ -10,82 +10,10 @@
 // This interface can only be extended in new OpenCV versions,
 // we can add new functions, but we can't change existed prototypes.
 
-#ifndef HAL_INTERFACE_H
-#define HAL_INTERFACE_H
+#ifndef __OPENCV_HAL_INTERFACE_H__
+#define __OPENCV_HAL_INTERFACE_H__
 
-#include <stdlib.h>
-
-// HAL has plain C interface
-
-#ifdef __cplusplus
-#   define CV_HAL_API extern "C" __attribute__((visibility("default")))
-#else
-#   define CV_HAL_API __attribute__((visibility("default")))
-#endif
-
-// All functions returns error codes, no exceptions
-
-typedef enum _CvHalStatus
-{
-    CV_HAL_SUCCESS,
-    CV_HAL_NOT_IMPLEMENTED
-} CvHalStatus;
-
-// HAL has own types and constants
-// or maybe we can reuse OpenCV types and constants
-
-enum
-{
-    CV_HAL_8U,
-    CV_HAL_8S,
-    CV_HAL_16U,
-    CV_HAL_16S,
-    CV_HAL_32S,
-    CV_HAL_32F,
-    CV_HAL_64F
-};
-
-enum
-{
-    CV_HAL_INTER_NN,
-    CV_HAL_INTER_LINEAR
-};
-
-typedef struct _CvHalMat
-{
-    unsigned char* data;
-    size_t step;
-    int rows;
-    int cols;
-
-    int depth;
-    int channels;
-
-    // for sub-matrices
-    unsigned char* datastart;
-    int xoff;
-    int yoff;
-} CvHalMat;
-
-// [width, heght]
-typedef int* CvHalSize;
-
-// [x, y]
-typedef int* CvHalPoint;
-
-// In addition to input parameters all HAL functions accept Context struct,
-// which contains some additional information like:
-// * OpenCV version
-// * Some parameters (number of threads)
-// For CUDA:
-// * information about CUDA device
-// * stream id
-
-typedef struct _CvHalContext
-{
-    int opencv_version;
-    int num_threads;
-} CvHalContext;
+#include "hal_types.h"
 
 // This two functions must be implemented in all HALs.
 

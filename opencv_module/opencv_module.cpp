@@ -1,36 +1,30 @@
 #include <iostream>
-#include "hal.hpp"
+#include <opencv2/imgproc.hpp>
 #include "opencv_module.hpp"
+#include "hal.hpp"
 
-namespace cv
+void cv::resize(const Mat& src, Mat& dst, int interpolation)
 {
-    // OpenCV functions
+    // First try to call HAL
+    if (hal::resize(src, dst, interpolation))
+        return;
 
-    void resize(const Mat& src, Mat& dst, int interpolation)
-    {
-        // First try to call HAL
-        if (cv::hal::resize(src, dst, interpolation))
-            return;
+    // If it fails use built-in implementation
+    std::cout << "Built-in resize" << std::endl;
+}
 
-        // If it fails use built-in implementation
+void cv::erode(const Mat& src, Mat& dst, int iterations)
+{
+    std::cout << "\nround: " << std::endl;
+    std::cout << hal::round(1.7) << "\n" << std::endl;
 
-        std::cout << "Built-in resize" << std::endl;
-    }
+    Mat kernel = getStructuringElement(MORPH_RECT, Size(1 + iterations * 2, 1 + iterations * 2));
+    Point anchor(iterations, iterations);
 
-    void erode(const Mat& src, Mat& dst, const Mat& kernel, int iterations, Point anchor)
-    {
-        std::cout << "\nround: " << std::endl;
-        std::cout << cv::hal::round(1.7) << std::endl;
+    // First try to call HAL
+    if (hal::erode(src, dst, kernel.data, kernel.size(), anchor))
+        return;
 
-        Size kernelSize;
-        kernelSize.width = kernelSize.height = iterations;
-
-        // First try to call HAL
-        if (cv::hal::erode(src, dst, kernel.data, kernelSize, anchor))
-            return;
-
-        // If it fails use built-in implementation
-
-        std::cout << "Built-in erode" << std::endl;
-    }
+    // If it fails use built-in implementation
+    std::cout << "Built-in erode" << std::endl;
 }
