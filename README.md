@@ -1,5 +1,5 @@
-Proof-of-concept design for the OpenCV Hardware Acceleration Layer (HAL) interface.
-===================================================================================
+OpenCV Hardware Acceleration Layer
+==================================
 
 
 
@@ -14,8 +14,8 @@ To test (Linux only)
 
 
 
-Some notes about the HAL design
--------------------------------
+HAL design
+----------
 
 * OpenCV can be built in three modes:
   * Without HAL support.
@@ -44,8 +44,8 @@ Some notes about the HAL design
 
 
 
-How it works?
--------------
+Implementation details
+----------------------
 
 OpenCV has a special header `hal_interface.h`, which defines HAL interface.
 This header is used both in OpenCV and in HAL implementations.
