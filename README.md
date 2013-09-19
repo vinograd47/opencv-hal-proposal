@@ -16,6 +16,8 @@ OpenCV can be built in three different modes:
 * With statically-linked HAL. OpenCV will use accelerated function from this HAL.
 * With dynamically-loadable HAL support. OpenCV will try to load HAL implementation at runtime, if it fails OpenCV will use default implementation.
 
+OpenCV uses CMake options `HAL_MODE`, `STATIC_HAL_INCLUDE_DIR` and `STATIC_HAL_LIB`, which choose the mode and HAL library.
+
 
 
 HAL design
@@ -104,7 +106,28 @@ HAL implementation
 A HAL implementation provides a subset of function from HAL API.
 
 
+The HAL implementation provides own header file - `hal_impl.h`.
+This header is used for static build.
 
+The header defines macros, describing which functions are provided by the HAL:
+
+```C
+//#define CV_HAL_HAS_HAMMING_DIST
+#define CV_HAL_HAS_RESIZE
+#define CV_HAL_HAS_ERODE
+```
+
+Also this header can contain some inline functions:
+
+```C
+#define CV_HAL_HAS_ROUND
+CV_HAL_INLINE int cvhal_round(double val)
+{
+    return ...;
+}
+```
+
+OpenCV provides a template for this header - `hal_impl_templ.h`.
 
 
 
