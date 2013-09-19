@@ -10,6 +10,10 @@ if(GENERATE_HAL_WRAPPERS)
                       VERBATIM
                       SOURCES "${CMAKE_SOURCE_DIR}/scripts/gen_hal_wrappers.py"
                               "${CMAKE_SOURCE_DIR}/hal_api/hal_types.h"
+                              "${CMAKE_SOURCE_DIR}/hal_api/hal_context.h"
                               "${CMAKE_SOURCE_DIR}/hal_api/hal_interface.h"
-                              "${CMAKE_SOURCE_DIR}/hal_api/hal_impl_templ.h")
+                              "${CMAKE_SOURCE_DIR}/hal_api/hal_impl_templ.h"
+                              "${CMAKE_SOURCE_DIR}/LICENSE"
+                              "${CMAKE_SOURCE_DIR}/README.md"
+    )
 endif()

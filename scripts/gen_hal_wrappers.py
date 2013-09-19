@@ -84,11 +84,24 @@ ${funcs_ptr_decl_list}
             return hal_mat;
         }
 
-        static inline CvHalContext getContext()
+        struct HalContext
         {
-            CvHalContext context;
-            context.opencv_version = CV_VERSION_EPOCH * 100 + CV_VERSION_MAJOR * 10 + CV_VERSION_MINOR;
-            context.num_threads = getNumThreads();
+            void* data[CV_HAL_CONTEXT_SIZE];
+        };
+
+        static inline HalContext getContext()
+        {
+            int opencv_version = CV_VERSION_EPOCH * 100 + CV_VERSION_MAJOR * 10 + CV_VERSION_MINOR;
+            int numThreads = getNumThreads();
+
+            HalContext context =
+            {
+                reinterpret_cast<void*>(opencv_version),
+
+                // OpenCV 3.0
+                reinterpret_cast<void*>(numThreads)
+            };
+
             return context;
         }
     #endif
@@ -188,9 +201,13 @@ namespace
     public:
         StaticHalInitializer()
         {
+            using namespace cv::hal::detail;
+
             std::cout << "Initialize static HAL \n" << std::endl;
 
-            CvHalStatus status = cvhal_init();
+            HalContext context = getContext();
+
+            CvHalStatus status = cvhal_init(context.data);
             if (status != CV_HAL_SUCCESS)
             {
                 std::cout << "cvhal_init failed \n" << std::endl;
@@ -222,7 +239,7 @@ bool isInitialized = false;
 cv::SharedLibrary halLib;
 cv::Mutex mutex;
 
-typedef CvHalStatus (*cvhal_init_func_ptr_t)();
+typedef CvHalStatus (*cvhal_init_func_ptr_t)(CvHalContext context);
 typedef const char* (*cvhal_info_func_ptr_t)();
 
 cvhal_init_func_ptr_t cvhal_init_func_ptr = NULL;
@@ -264,7 +281,9 @@ ${funcs_ptr_clear_list}
         return;
     }
 
-    CvHalStatus status = cvhal_init_func_ptr();
+    HalContext context = getContext();
+
+    CvHalStatus status = cvhal_init_func_ptr(context.data);
     if (status != CV_HAL_SUCCESS)
     {
         std::cout << "cvhal_init failed \n" << std::endl;
@@ -387,13 +406,13 @@ class ParamInfo(object):
         return self.halType + ' ' + self.name
 
     def gen_ocv_decl(self):
-        if self.halType == 'CvHalContext *':
+        if self.halType == 'CvHalContext':
             return ''
         else:
             return self.ocvType + ' ' + self.name
 
     def gen_unused(self):
-        if self.halType == 'CvHalContext *':
+        if self.halType == 'CvHalContext':
             return ''
         else:
             return '    (void) ' + self.name + ';'
@@ -402,16 +421,16 @@ class ParamInfo(object):
     def gen_conversion(self):
         if self.halType == 'CvHalMat *':
             return Template('    CvHalMat hal_${param_name} = detail::toCvHalMat(${param_name});').substitute(param_name=self.name)
-        elif self.halType == 'CvHalContext *':
-            return '    CvHalContext context = detail::getContext();'
+        elif self.halType == 'CvHalContext':
+            return '    detail::HalContext context = detail::getContext();'
         else:
             return ''
 
     def gen_pass(self):
         if self.halType == 'CvHalMat *':
             return '&hal_' + self.name
-        elif self.halType == 'CvHalContext *':
-            return '&context'
+        elif self.halType == 'CvHalContext':
+            return 'context.data'
         elif self.halType == 'CvHalSize':
             return '&' + self.name + '.width'
         elif self.halType == 'CvHalPoint':

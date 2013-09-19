@@ -86,11 +86,8 @@ typedef int* CvHalPoint;
 // For CUDA:
 // * information about CUDA device
 // * stream id
+typedef void** CvHalContext;
 
-typedef struct _CvHalContext
-{
-    int opencv_version;
-    int num_threads;
-} CvHalContext;
+#include "hal_context.h"
 
 #endif

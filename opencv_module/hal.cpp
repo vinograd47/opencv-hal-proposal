@@ -27,9 +27,13 @@ namespace
     public:
         StaticHalInitializer()
         {
+            using namespace cv::hal::detail;
+
             std::cout << "Initialize static HAL \n" << std::endl;
 
-            CvHalStatus status = cvhal_init();
+            HalContext context = getContext();
+
+            CvHalStatus status = cvhal_init(context.data);
             if (status != CV_HAL_SUCCESS)
             {
                 std::cout << "cvhal_init failed \n" << std::endl;
@@ -61,7 +65,7 @@ bool isInitialized = false;
 cv::SharedLibrary halLib;
 cv::Mutex mutex;
 
-typedef CvHalStatus (*cvhal_init_func_ptr_t)();
+typedef CvHalStatus (*cvhal_init_func_ptr_t)(CvHalContext context);
 typedef const char* (*cvhal_info_func_ptr_t)();
 
 cvhal_init_func_ptr_t cvhal_init_func_ptr = NULL;
@@ -107,7 +111,9 @@ void cv::loadHalImpl(const String& halLibName)
         return;
     }
 
-    CvHalStatus status = cvhal_init_func_ptr();
+    HalContext context = getContext();
+
+    CvHalStatus status = cvhal_init_func_ptr(context.data);
     if (status != CV_HAL_SUCCESS)
     {
         std::cout << "cvhal_init failed \n" << std::endl;

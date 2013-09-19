@@ -17,16 +17,16 @@
 
 // This two functions must be implemented in all HALs.
 
-CV_HAL_API CvHalStatus cvhal_init(); // initialize HAL
+CV_HAL_API CvHalStatus cvhal_init(CvHalContext context); // initialize HAL
 CV_HAL_API const char* cvhal_info(); // Get information about HAL (name, vendor, version, etc.)
 
 // This is a set of HAL functions.
 // As it has been said before, a HAL doesn't have to implement all functions.
 
-CV_HAL_API CvHalStatus cvhal_hamming_dist(unsigned char* a, unsigned char* b, size_t len, int* result, CvHalContext* context);
+CV_HAL_API CvHalStatus cvhal_hamming_dist(unsigned char* a, unsigned char* b, size_t len, int* result, CvHalContext context);
 
-CV_HAL_API CvHalStatus cvhal_resize(CvHalMat* src, CvHalMat* dst, int interpolation, CvHalContext* context);
+CV_HAL_API CvHalStatus cvhal_resize(CvHalMat* src, CvHalMat* dst, int interpolation, CvHalContext context);
 
-CV_HAL_API CvHalStatus cvhal_erode(CvHalMat* src, CvHalMat* dst, unsigned char* kernel, CvHalSize kernelSize, CvHalPoint anchor, CvHalContext* context);
+CV_HAL_API CvHalStatus cvhal_erode(CvHalMat* src, CvHalMat* dst, unsigned char* kernel, CvHalSize kernelSize, CvHalPoint anchor, CvHalContext context);
 
 #endif
