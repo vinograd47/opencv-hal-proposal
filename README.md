@@ -136,6 +136,7 @@ HAL Layer
 
 HAL Layer is a thin С++ wrapper for HAL API (actually, it is a part of `core` module).
 It is used to hide differences between modes and provide simple API for OpenCV modules.
+It is a private interface and it is used only inside OpenCV.
 It is designed to be as small as possible to avoid overhead from this layer.
 This wrappers are generated automatically from `hal_interface.h` header by scripts.
 
@@ -192,7 +193,6 @@ static inline int round(double val)
     return cvhal_round(val);
 #else
     // default implementation
-    std::cout << "built-in round" << std::endl;
     return cvRound(val);
 #endif
 }
@@ -203,5 +203,34 @@ static inline int round(double val)
 OpenCV modules
 --------------
 
-If HAL fails OpenCV uses own implementation.
+All OpenCV modules work with HAL via HAL Layer.
+First OpenCV function tries to call HAL implemetation and, if HAL fails, OpenCV uses own implementation.
 
+```C
+void cv::resize(const Mat& src, Mat& dst, int interpolation)
+{
+    // First try to call HAL
+    if (hal::resize(src, dst, interpolation))
+        return;
+
+    // If it fails use built-in implementation
+    ...
+}
+```
+
+
+
+OpenCV user
+-----------
+
+OpenCV user can get information about HAL:
+
+```C
+CV_EXPORTS String getHalInfo();
+```
+
+OpenCV user can load own HAL in dynamic mode:
+
+```C
+CV_EXPORTS void loadHalImpl(const String& halLibName);
+```
