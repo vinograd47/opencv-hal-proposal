@@ -1,8 +1,17 @@
-// This header defines the OpenCV - HAL interface.
+// This header defines the OpenCV HAL interface.
 // This header will be used both in OpenCV and in HAL implementation.
 
-// It contains types and constants definitions
-// and set of functions prototypes.
+// It contains a set of functions prototypes.
+// All funcions has plain C interface
+// All functions returns error codes, no exceptions
+
+// In addition to input parameters all HAL functions accept CvHalContext struct,
+// which contains some additional information like:
+// * OpenCV version
+// * Some parameters (number of threads)
+// For CUDA:
+// * information about CUDA device
+// * stream id
 
 // A HAL doesn't have to implement all functions.
 // It can only implement a subset.
@@ -20,8 +29,7 @@
 CV_HAL_API CvHalStatus cvhal_init(CvHalContext context); // initialize HAL
 CV_HAL_API const char* cvhal_info(); // Get information about HAL (name, vendor, version, etc.)
 
-// This is a set of HAL functions.
-// As it has been said before, a HAL doesn't have to implement all functions.
+// This is the set of HAL functions.
 
 CV_HAL_API CvHalStatus cvhal_hamming_dist(unsigned char* a, unsigned char* b, size_t len, int* result, CvHalContext context);
 

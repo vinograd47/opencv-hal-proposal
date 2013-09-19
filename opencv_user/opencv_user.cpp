@@ -7,7 +7,7 @@ int main(int argc, const char* argv[])
     if (argc == 2)
         cv::loadHalImpl(argv[1]);
 
-    std::cout << cv::getHalInfo() << std::endl;
+    std::cout << "HAL info : " << cv::getHalInfo() << std::endl;
 
     cv::Mat src(128, 128, CV_8UC1);
     cv::Mat dst(64, 64, CV_8UC1);

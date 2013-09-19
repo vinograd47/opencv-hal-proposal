@@ -1,7 +1,15 @@
+// This header contains types, macroses and constants definitions
+// for HAL module.
+
+// HAL has independent from OpenCV interface and uses own types,
+// macroses and constants.
+
 #ifndef __OPENCV_HAL_TYPES_H__
 #define __OPENCV_HAL_TYPES_H__
 
 #include <stdlib.h>
+
+// CV_HAL_INLINE
 
 #if defined __cplusplus
 #   define CV_HAL_INLINE static inline
@@ -11,6 +19,8 @@
 #   define CV_HAL_INLINE static
 #endif
 
+// CV_HAL_EXPORTS
+
 #if (defined WIN32 || defined _WIN32 || defined WINCE || defined __CYGWIN__) && !defined CV_HAL_STATIC
 #   define CV_HAL_EXPORTS __declspec(dllexport)
 #elif defined __GNUC__ && __GNUC__ >= 4
@@ -19,17 +29,19 @@
 #   define CV_HAL_EXPORTS
 #endif
 
+// CV_HAL_EXTERN_C
+
 #ifdef __cplusplus
 #   define CV_HAL_EXTERN_C extern "C"
 #else
 #   define CV_HAL_EXTERN_C
 #endif
 
-// HAL has plain C interface
+// CV_HAL_API
 
 #define CV_HAL_API CV_HAL_EXTERN_C CV_HAL_EXPORTS
 
-// All functions returns error codes, no exceptions
+// CvHalStatus
 
 typedef enum _CvHalStatus
 {
@@ -37,8 +49,7 @@ typedef enum _CvHalStatus
     CV_HAL_NOT_IMPLEMENTED
 } CvHalStatus;
 
-// HAL has own types and constants
-// or maybe we can reuse OpenCV types and constants
+// Matrix depth
 
 enum
 {
@@ -51,11 +62,15 @@ enum
     CV_HAL_64F
 };
 
+// Interpolation mode
+
 enum
 {
-    CV_HAL_INTER_NN,
+    CV_HAL_INTER_NEAREST,
     CV_HAL_INTER_LINEAR
 };
+
+// CvHalMat
 
 typedef struct _CvHalMat
 {
@@ -73,19 +88,16 @@ typedef struct _CvHalMat
     int yoff;
 } CvHalMat;
 
-// [width, heght]
-typedef int* CvHalSize;
+// CvHalSize
 
-// [x, y]
-typedef int* CvHalPoint;
+typedef int* CvHalSize; // [width, heght]
 
-// In addition to input parameters all HAL functions accept Context struct,
-// which contains some additional information like:
-// * OpenCV version
-// * Some parameters (number of threads)
-// For CUDA:
-// * information about CUDA device
-// * stream id
+// CvHalPoint
+
+typedef int* CvHalPoint; // [x, y]
+
+// CvHalContext
+
 typedef void** CvHalContext;
 
 #include "hal_context.h"

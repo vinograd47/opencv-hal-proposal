@@ -13,9 +13,11 @@ R"""// This is generated file. Do not edit it.
 
 #include "hal_interface.h"
 
+// Provided functions
+
 ${macros_list}
 
-// This functions can be used only in static build as inlined
+// Inline functions
 
 //#define CV_HAL_HAS_ROUND
 //CV_HAL_INLINE int cvhal_round(double val)

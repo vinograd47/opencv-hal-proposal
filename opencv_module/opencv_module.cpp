@@ -15,8 +15,8 @@ void cv::resize(const Mat& src, Mat& dst, int interpolation)
 
 void cv::erode(const Mat& src, Mat& dst, int iterations)
 {
-    std::cout << "\nround: " << std::endl;
-    std::cout << hal::round(1.7) << "\n" << std::endl;
+    // Use optimized round
+    std::cout << hal::round(1.7) << std::endl;
 
     Mat kernel = getStructuringElement(MORPH_RECT, Size(1 + iterations * 2, 1 + iterations * 2));
     Point anchor(iterations, iterations);

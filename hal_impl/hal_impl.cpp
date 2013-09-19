@@ -10,7 +10,7 @@ CvHalStatus cvhal_init(CvHalContext context)
     std::cout << "Init my HAL" << std::endl;
     std::cout << "OpenCV Version : " << CV_HAL_GET_OPENCV_VERSION(context) << std::endl;
     std::cout << "OpenCV Num Threads : " << CV_HAL_GET_NUM_THREADS(context) << std::endl;
-    std::cout << "OpenCV CUDA stream : " << CV_HAL_GET_CUDA_STREAM(context) << std::endl;
+    std::cout << "OpenCV CUDA stream : " << CV_HAL_GET_CUDA_STREAM(context) << "\n" << std::endl;
     return CV_HAL_SUCCESS;
 }
 
