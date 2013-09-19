@@ -86,6 +86,11 @@ We can add new entries to context in new OpenCV versions, so this macroses check
 
 
 
+HAL implementation
+------------------
+
+A HAL implementation provides a subset of function from HAL API.
+
 
 
 
