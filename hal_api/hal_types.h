@@ -11,7 +11,7 @@
 #   define CV_HAL_INLINE static
 #endif
 
-#if (defined WIN32 || defined _WIN32 || defined WINCE || defined __CYGWIN__)
+#if (defined WIN32 || defined _WIN32 || defined WINCE || defined __CYGWIN__) && !defined CV_HAL_STATIC
 #   define CV_HAL_EXPORTS __declspec(dllexport)
 #elif defined __GNUC__ && __GNUC__ >= 4
 #   define CV_HAL_EXPORTS __attribute__ ((visibility ("default")))

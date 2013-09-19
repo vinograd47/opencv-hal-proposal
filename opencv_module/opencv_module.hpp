@@ -5,12 +5,11 @@
 
 namespace cv {
 
-// This function is not thread safe.
-void loadHalImpl(const String& halLibName);
-String getHalInfo();
+CV_EXPORTS void loadHalImpl(const String& halLibName);
+CV_EXPORTS String getHalInfo();
 
-void resize(const Mat& src, Mat& dst, int interpolation);
-void erode(const Mat& src, Mat& dst, int iterations);
+CV_EXPORTS void resize(const Mat& src, Mat& dst, int interpolation);
+CV_EXPORTS void erode(const Mat& src, Mat& dst, int iterations);
 
 }
 

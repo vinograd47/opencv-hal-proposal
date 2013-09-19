@@ -3,8 +3,8 @@
 #include <iostream>
 
 #if defined CV_HAL_DYNAMIC
-#   include <dlfcn.h>
 #   include <pthread.h>
+#   include "shared_library.hpp"
 #endif
 
 #include "hal.hpp"
@@ -52,7 +52,8 @@ cv::String cv::getHalInfo()
 namespace cv { namespace hal { namespace detail {
 
 bool isInitialized = false;
-void* halLib = NULL;
+cv::SharedLibrary halLib;
+cv::Mutex mutex;
 
 typedef CvHalStatus (*cvhal_init_func_ptr_t)();
 typedef const char* (*cvhal_info_func_ptr_t)();
@@ -70,12 +71,11 @@ void cv::loadHalImpl(const String& halLibName)
 {
     using namespace cv::hal::detail;
 
+    cv::AutoLock lock(mutex);
+
     // unload previous HAL
-    if (halLib)
-    {
-        dlclose(halLib);
-        halLib = NULL;
-    }
+    if (halLib.isLoaded())
+        halLib.unload();
 
     cvhal_hamming_dist_func_ptr = NULL;
     cvhal_resize_func_ptr = NULL;
@@ -85,16 +85,15 @@ void cv::loadHalImpl(const String& halLibName)
 
     std::cout << "Initialize shared HAL : " << halLibName << "\n" << std::endl;
 
-    halLib = dlopen(halLibName.c_str(), RTLD_NOW);
-    if (!halLib)
+    halLib.load(halLibName);
+    if (!halLib.isLoaded())
     {
-        const char* msg = dlerror();
-        std::cout << "Can't load " << halLibName << " library :" << (msg ? msg : "") << "\n" << std::endl;
+        std::cout << "Can't load " << halLibName << " library \n" << std::endl;
         isInitialized = true;
         return;
     }
 
-    cvhal_init_func_ptr = (cvhal_init_func_ptr_t) dlsym(halLib, "cvhal_init");
+    cvhal_init_func_ptr = (cvhal_init_func_ptr_t) halLib.getSymbol("cvhal_init");
     if (!cvhal_init_func_ptr)
     {
         std::cout << halLibName << " doesn't have cvhal_init function \n" << std::endl;
@@ -110,7 +109,7 @@ void cv::loadHalImpl(const String& halLibName)
         return;
     }
 
-    cvhal_info_func_ptr = (cvhal_info_func_ptr_t) dlsym(halLib, "cvhal_info");
+    cvhal_info_func_ptr = (cvhal_info_func_ptr_t) halLib.getSymbol("cvhal_info");
     if (!cvhal_info_func_ptr)
     {
         std::cout << halLibName << " doesn't have cvhal_info function \n" << std::endl;
@@ -121,9 +120,9 @@ void cv::loadHalImpl(const String& halLibName)
     // HAL module was loaded correctly
     // load all available functions
 
-    cvhal_hamming_dist_func_ptr = (cvhal_hamming_dist_func_ptr_t) dlsym(halLib, "cvhal_hamming_dist");
-    cvhal_resize_func_ptr = (cvhal_resize_func_ptr_t) dlsym(halLib, "cvhal_resize");
-    cvhal_erode_func_ptr = (cvhal_erode_func_ptr_t) dlsym(halLib, "cvhal_erode");
+    cvhal_hamming_dist_func_ptr = (cvhal_hamming_dist_func_ptr_t) halLib.getSymbol("cvhal_hamming_dist");
+    cvhal_resize_func_ptr = (cvhal_resize_func_ptr_t) halLib.getSymbol("cvhal_resize");
+    cvhal_erode_func_ptr = (cvhal_erode_func_ptr_t) halLib.getSymbol("cvhal_erode");
 
     isInitialized = true;
 }
@@ -150,7 +149,7 @@ namespace
     }
 }
 
-void cv::hal::detail::initHalPointers()
+void cv::hal::detail::initPointers()
 {
     pthread_once(&once_control, init_routine);
 }
@@ -160,7 +159,7 @@ cv::String cv::getHalInfo()
     using namespace cv::hal::detail;
 
     if (!isInitialized)
-        initHalPointers();
+        initPointers();
 
     if (!cvhal_info_func_ptr)
         return "No HAL";

@@ -28,8 +28,8 @@ namespace cv { namespace hal {
 
 namespace detail {
     #if defined CV_HAL_DYNAMIC
-        extern bool isInitialized;
-        void initHalPointers();
+        CV_EXPORTS extern bool isInitialized;
+        CV_EXPORTS void initPointers();
 
         typedef CvHalStatus (*cvhal_hamming_dist_func_ptr_t)(unsigned char * a, unsigned char * b, size_t len, int * result, CvHalContext * context);
         extern cvhal_hamming_dist_func_ptr_t cvhal_hamming_dist_func_ptr;
@@ -86,7 +86,7 @@ static inline bool hamming_dist(unsigned char * a, unsigned char * b, size_t len
 #else
     #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
-            detail::initHalPointers();
+            detail::initPointers();
 
         if (!detail::cvhal_hamming_dist_func_ptr)
             return false;
@@ -117,7 +117,7 @@ static inline bool resize(const Mat & src, const Mat & dst, int interpolation)
 #else
     #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
-            detail::initHalPointers();
+            detail::initPointers();
 
         if (!detail::cvhal_resize_func_ptr)
             return false;
@@ -152,7 +152,7 @@ static inline bool erode(const Mat & src, const Mat & dst, unsigned char * kerne
 #else
     #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
-            detail::initHalPointers();
+            detail::initPointers();
 
         if (!detail::cvhal_erode_func_ptr)
             return false;

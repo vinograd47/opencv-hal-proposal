@@ -4,8 +4,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(all_build_files
     "opencv_module.hpp"
     "opencv_module.cpp"
-#    "shared_library.hpp"
-#    "shared_library.cpp"
+    "shared_library.hpp"
+    "shared_library.cpp"
     "hal.hpp"
     "hal.cpp"
 )
@@ -18,7 +18,7 @@ if(static_hal)
     add_library(opencv_module STATIC ${all_build_files})
     target_link_libraries(opencv_module ${STATIC_HAL_LIB})
 elseif(dynamic_hal)
-    add_definitions("-DCV_HAL_DYNAMIC")
+    add_definitions("-DCV_HAL_DYNAMIC" "-DCVAPI_EXPORTS")
     add_library(opencv_module SHARED ${all_build_files})
 else()
     add_library(opencv_module STATIC ${all_build_files})

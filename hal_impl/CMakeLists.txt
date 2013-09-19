@@ -6,6 +6,8 @@ set(all_build_files
 )
 
 if(static_hal)
+    add_definitions("-DCV_HAL_STATIC")
+
     add_library(hal_impl STATIC ${all_build_files})
 
     set_target_properties(hal_impl PROPERTIES

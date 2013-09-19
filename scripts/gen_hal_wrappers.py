@@ -59,8 +59,8 @@ namespace cv { namespace hal {
 
 namespace detail {
     #if defined CV_HAL_DYNAMIC
-        extern bool isInitialized;
-        void initHalPointers();
+        CV_EXPORTS extern bool isInitialized;
+        CV_EXPORTS void initPointers();
 
 ${funcs_ptr_decl_list}
     #endif
@@ -136,7 +136,7 @@ ${param_unused_list}
 #else
     #if defined CV_HAL_DYNAMIC
         if (!detail::isInitialized)
-            detail::initHalPointers();
+            detail::initPointers();
 
         if (!detail::cvhal_${func_name}_func_ptr)
             return false;
@@ -164,8 +164,8 @@ R"""// This is generated file. Do not edit it.
 #include <iostream>
 
 #if defined CV_HAL_DYNAMIC
-#   include <dlfcn.h>
 #   include <pthread.h>
+#   include "shared_library.hpp"
 #endif
 
 #include "hal.hpp"
@@ -213,7 +213,8 @@ cv::String cv::getHalInfo()
 namespace cv { namespace hal { namespace detail {
 
 bool isInitialized = false;
-void* halLib = NULL;
+cv::SharedLibrary halLib;
+cv::Mutex mutex;
 
 typedef CvHalStatus (*cvhal_init_func_ptr_t)();
 typedef const char* (*cvhal_info_func_ptr_t)();
@@ -229,12 +230,11 @@ void cv::loadHalImpl(const String& halLibName)
 {
     using namespace cv::hal::detail;
 
+    cv::AutoLock lock(mutex);
+
     // unload previous HAL
-    if (halLib)
-    {
-        dlclose(halLib);
-        halLib = NULL;
-    }
+    if (halLib.isLoaded())
+        halLib.unload();
 
 ${funcs_ptr_clear_list}
 
@@ -242,16 +242,15 @@ ${funcs_ptr_clear_list}
 
     std::cout << "Initialize shared HAL : " << halLibName << "\n" << std::endl;
 
-    halLib = dlopen(halLibName.c_str(), RTLD_NOW);
-    if (!halLib)
+    halLib.load(halLibName);
+    if (!halLib.isLoaded())
     {
-        const char* msg = dlerror();
-        std::cout << "Can't load " << halLibName << " library :" << (msg ? msg : "") << "\n" << std::endl;
+        std::cout << "Can't load " << halLibName << " library \n" << std::endl;
         isInitialized = true;
         return;
     }
 
-    cvhal_init_func_ptr = (cvhal_init_func_ptr_t) dlsym(halLib, "cvhal_init");
+    cvhal_init_func_ptr = (cvhal_init_func_ptr_t) halLib.getSymbol("cvhal_init");
     if (!cvhal_init_func_ptr)
     {
         std::cout << halLibName << " doesn't have cvhal_init function \n" << std::endl;
@@ -267,7 +266,7 @@ ${funcs_ptr_clear_list}
         return;
     }
 
-    cvhal_info_func_ptr = (cvhal_info_func_ptr_t) dlsym(halLib, "cvhal_info");
+    cvhal_info_func_ptr = (cvhal_info_func_ptr_t) halLib.getSymbol("cvhal_info");
     if (!cvhal_info_func_ptr)
     {
         std::cout << halLibName << " doesn't have cvhal_info function \n" << std::endl;
@@ -305,7 +304,7 @@ namespace
     }
 }
 
-void cv::hal::detail::initHalPointers()
+void cv::hal::detail::initPointers()
 {
     pthread_once(&once_control, init_routine);
 }
@@ -315,7 +314,7 @@ cv::String cv::getHalInfo()
     using namespace cv::hal::detail;
 
     if (!isInitialized)
-        initHalPointers();
+        initPointers();
 
     if (!cvhal_info_func_ptr)
         return "No HAL";
@@ -435,7 +434,7 @@ class FuncInfo(object):
         return Template('    ${func_name}_func_ptr = NULL;').substitute(func_name=self.fullName)
 
     def gen_load(self):
-        return Template('    ${func_name}_func_ptr = (${func_name}_func_ptr_t) dlsym(halLib, "${func_name}");').substitute(func_name=self.fullName)
+        return Template('    ${func_name}_func_ptr = (${func_name}_func_ptr_t) halLib.getSymbol("${func_name}");').substitute(func_name=self.fullName)
 
 
 
