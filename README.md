@@ -14,7 +14,7 @@ OpenCV can be built in three different modes:
 
 
 
-HAL struct
+HAL design
 ----------
 
 The proposed HAL design consists of several parts:
@@ -27,7 +27,36 @@ HAL API
 -------
 
 OpenCV provides HAL interface description (as a set of C header files).
+This headers will be used both in OpenCV and in HAL implementations.
+
+HAL API is a set of functions prototypes.
+All funcions has plain C interface (no classes, no stl, no exceptions, etc.).
+
+```C
+// This two functions must be implemented in all HALs.
+
+CV_HAL_API CvHalStatus cvhal_init(CvHalContext context); // initialize HAL
+CV_HAL_API const char* cvhal_info(); // Get information about HAL (name, vendor, version, etc.)
+
+// This is the set of HAL functions.
+
+CV_HAL_API CvHalStatus cvhal_hamming_dist(unsigned char* a, unsigned char* b, size_t len, int* result, CvHalContext context);
+
+CV_HAL_API CvHalStatus cvhal_resize(CvHalMat* src, CvHalMat* dst, int interpolation, CvHalContext context);
+```
+
+
+
+
+
 HAL interface has plain C API. This API is fixed. It can be only extended with new functions.
+
+
+
+
+
+
+
 A HAL implementation doesn't have to implement all operations. A HAL developer can implement only subset of this interface.
 Some small functions from HAL are available only in static mode as inlined (cvRound, for example).
 OpenCV can provide separate test suite set for HAL implementations.
