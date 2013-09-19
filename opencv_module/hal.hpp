@@ -31,13 +31,13 @@ namespace detail {
         CV_EXPORTS extern bool isInitialized;
         CV_EXPORTS void initPointers();
 
-        typedef CvHalStatus (*cvhal_hamming_dist_func_ptr_t)(unsigned char * a, unsigned char * b, size_t len, int * result, CvHalContext context);
+        typedef CvHalStatus (*cvhal_hamming_dist_func_ptr_t)(unsigned char * a, unsigned char * b, size_t len, int * result, CvHalContext * context);
         extern cvhal_hamming_dist_func_ptr_t cvhal_hamming_dist_func_ptr;
 
-        typedef CvHalStatus (*cvhal_resize_func_ptr_t)(CvHalMat * src, CvHalMat * dst, int interpolation, CvHalContext context);
+        typedef CvHalStatus (*cvhal_resize_func_ptr_t)(CvHalMat * src, CvHalMat * dst, int interpolation, CvHalContext * context);
         extern cvhal_resize_func_ptr_t cvhal_resize_func_ptr;
 
-        typedef CvHalStatus (*cvhal_erode_func_ptr_t)(CvHalMat * src, CvHalMat * dst, unsigned char * kernel, CvHalSize kernelSize, CvHalPoint anchor, CvHalContext context);
+        typedef CvHalStatus (*cvhal_erode_func_ptr_t)(CvHalMat * src, CvHalMat * dst, unsigned char * kernel, CvHalSize kernelSize, CvHalPoint anchor, CvHalContext * context);
         extern cvhal_erode_func_ptr_t cvhal_erode_func_ptr;
     #endif
 
@@ -60,23 +60,17 @@ namespace detail {
             return hal_mat;
         }
 
-        struct HalContext
+        static inline CvHalContext getContext()
         {
-            void* data[CV_HAL_CONTEXT_SIZE];
-        };
+            CvHalContext context;
 
-        static inline HalContext getContext()
-        {
-            int opencv_version = CV_VERSION_EPOCH * 100 + CV_VERSION_MAJOR * 10 + CV_VERSION_MINOR;
-            int numThreads = getNumThreads();
+            context.opencv_version = CV_VERSION_EPOCH * 100 + CV_VERSION_MAJOR * 10 + CV_VERSION_MINOR;
 
-            HalContext context =
-            {
-                reinterpret_cast<void*>(opencv_version),
+            // OpenCV 3.0
+            context.num_threads = getNumThreads();
 
-                // OpenCV 3.0
-                reinterpret_cast<void*>(numThreads)
-            };
+            // OpenCV 3.1
+            context.cuda_stream = NULL;
 
             return context;
         }
@@ -107,12 +101,12 @@ static inline bool hamming_dist(unsigned char * a, unsigned char * b, size_t len
 
     CvHalStatus status;
 
-    detail::HalContext context = detail::getContext();
+    CvHalContext context = detail::getContext();
 
     #if defined CV_HAL_STATIC
-        status = cvhal_hamming_dist(a, b, len, result, context.data);
+        status = cvhal_hamming_dist(a, b, len, result, &context);
     #else
-        status = detail::cvhal_hamming_dist_func_ptr(a, b, len, result, context.data);
+        status = detail::cvhal_hamming_dist_func_ptr(a, b, len, result, &context);
     #endif
 
     return status == CV_HAL_SUCCESS;
@@ -140,12 +134,12 @@ static inline bool resize(const Mat & src, const Mat & dst, int interpolation)
 
     CvHalMat hal_src = detail::toCvHalMat(src);
     CvHalMat hal_dst = detail::toCvHalMat(dst);
-    detail::HalContext context = detail::getContext();
+    CvHalContext context = detail::getContext();
 
     #if defined CV_HAL_STATIC
-        status = cvhal_resize(&hal_src, &hal_dst, interpolation, context.data);
+        status = cvhal_resize(&hal_src, &hal_dst, interpolation, &context);
     #else
-        status = detail::cvhal_resize_func_ptr(&hal_src, &hal_dst, interpolation, context.data);
+        status = detail::cvhal_resize_func_ptr(&hal_src, &hal_dst, interpolation, &context);
     #endif
 
     return status == CV_HAL_SUCCESS;
@@ -175,12 +169,12 @@ static inline bool erode(const Mat & src, const Mat & dst, unsigned char * kerne
 
     CvHalMat hal_src = detail::toCvHalMat(src);
     CvHalMat hal_dst = detail::toCvHalMat(dst);
-    detail::HalContext context = detail::getContext();
+    CvHalContext context = detail::getContext();
 
     #if defined CV_HAL_STATIC
-        status = cvhal_erode(&hal_src, &hal_dst, kernel, &kernelSize.width, &anchor.x, context.data);
+        status = cvhal_erode(&hal_src, &hal_dst, kernel, &kernelSize.width, &anchor.x, &context);
     #else
-        status = detail::cvhal_erode_func_ptr(&hal_src, &hal_dst, kernel, &kernelSize.width, &anchor.x, context.data);
+        status = detail::cvhal_erode_func_ptr(&hal_src, &hal_dst, kernel, &kernelSize.width, &anchor.x, &context);
     #endif
 
     return status == CV_HAL_SUCCESS;

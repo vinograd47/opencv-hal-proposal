@@ -98,8 +98,6 @@ typedef int* CvHalPoint; // [x, y]
 
 // CvHalContext
 
-typedef void** CvHalContext;
-
 #include "hal_context.h"
 
 #endif

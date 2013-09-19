@@ -7,29 +7,29 @@
 #ifndef __OPENCV_HAL_CONTEXT_H__
 #define __OPENCV_HAL_CONTEXT_H__
 
-enum {
-    CV_HAL_CONTEXT_IND_OPENCV_VERSION,
+typedef void* cudaStream_t;
+
+typedef struct _CvHalContext {
+    int opencv_version;
 
     // OpenCV 3.0
-    CV_HAL_CONTEXT_IND_NUM_THREADS,
+    int num_threads;
 
     // OpenCV 3.1
-    CV_HAL_CONTEXT_IND_CUDA_STREAM,
-
-    CV_HAL_CONTEXT_SIZE
-};
+    cudaStream_t cuda_stream;
+} CvHalContext;
 
 #define CV_HAL_GET_OPENCV_VERSION(context) \
-    ((context) ? (int) *(int*)((context) + CV_HAL_CONTEXT_IND_OPENCV_VERSION) : 0)
+    ((context) ? context->opencv_version : 0)
 
 // OpenCV 3.0
 
 #define CV_HAL_GET_NUM_THREADS(context) \
-    (CV_HAL_GET_OPENCV_VERSION(context) >= 300 ? *(int*)((context) + CV_HAL_CONTEXT_IND_NUM_THREADS) : -1)
+    (CV_HAL_GET_OPENCV_VERSION(context) >= 300 ? context->num_threads : -1)
 
 // OpenCV 3.1
 
 #define CV_HAL_GET_CUDA_STREAM(context) \
-    (CV_HAL_GET_OPENCV_VERSION(context) >= 310 ? (cudaStream_t) (context)[CV_HAL_CONTEXT_IND_CUDA_STREAM] : (cudaStream_t) 0)
+    (CV_HAL_GET_OPENCV_VERSION(context) >= 310 ? context->cuda_stream : (cudaStream_t) 0)
 
 #endif

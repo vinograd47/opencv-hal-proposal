@@ -3,9 +3,7 @@
 #include <iostream>
 #include "hal_impl.h"
 
-typedef void* cudaStream_t;
-
-CvHalStatus cvhal_init(CvHalContext context)
+CvHalStatus cvhal_init(CvHalContext* context)
 {
     std::cout << "Init my HAL" << std::endl;
     std::cout << "OpenCV Version : " << CV_HAL_GET_OPENCV_VERSION(context) << std::endl;
@@ -19,7 +17,7 @@ const char* cvhal_info()
     return "My Custom HAL";
 }
 
-CvHalStatus cvhal_resize(CvHalMat* src, CvHalMat* dst, int interpolation, CvHalContext context)
+CvHalStatus cvhal_resize(CvHalMat* src, CvHalMat* dst, int interpolation, CvHalContext* context)
 {
     if (CV_HAL_GET_NUM_THREADS(context) == 1)
     {
@@ -37,7 +35,7 @@ CvHalStatus cvhal_resize(CvHalMat* src, CvHalMat* dst, int interpolation, CvHalC
     return CV_HAL_SUCCESS;
 }
 
-CvHalStatus cvhal_erode(CvHalMat* src, CvHalMat* dst, unsigned char* kernel, CvHalSize kernelSize, CvHalPoint anchor, CvHalContext context)
+CvHalStatus cvhal_erode(CvHalMat* src, CvHalMat* dst, unsigned char* kernel, CvHalSize kernelSize, CvHalPoint anchor, CvHalContext* context)
 {
     std::cout << "erode from HAL : kernelSize = [" << kernelSize[0] << " x " << kernelSize[1] << "] anchor=(" << anchor[0] << ", " << anchor[1] << ")" << std::endl;
     return CV_HAL_SUCCESS;
