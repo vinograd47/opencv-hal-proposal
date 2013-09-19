@@ -3,6 +3,8 @@ OpenCV Hardware Acceleration Layer
 
 This document describes design for the OpenCV Hardware Acceleration Layer (HAL) interface.
 
+![HAL Struct](hal_struct.png)
+
 HAL design
 ----------
 
