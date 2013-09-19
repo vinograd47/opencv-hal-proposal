@@ -3,7 +3,44 @@ OpenCV Hardware Acceleration Layer
 
 This document describes design for the OpenCV Hardware Acceleration Layer (HAL) interface.
 
+HAL is a separate module that contains optimized implementation of some basic functions. 
+It is used to accelerate OpenCV for different platforms.
+The HAL implementations can be provided by different third-party developers.
+
+OpenCV can be built in three different modes:
+* Without HAL support. Only default implementation will be used in this mode.
+* With statically-linked HAL. OpenCV will use accelerated function from this HAL.
+* With dynamically-loadable HAL support. OpenCV will try to load HAL implementation at runtime, if it fails OpenCV will use default implementation.
+
+
+
+HAL struct
+----------
+
+The proposed HAL design consists of several parts:
+
 ![HAL Struct](hal_struct.png)
+
+
+
+HAL API
+-------
+
+OpenCV provides HAL interface description (as a set of C header files).
+HAL interface has plain C API. This API is fixed. It can be only extended with new functions.
+A HAL implementation doesn't have to implement all operations. A HAL developer can implement only subset of this interface.
+Some small functions from HAL are available only in static mode as inlined (cvRound, for example).
+OpenCV can provide separate test suite set for HAL implementations.
+
+
+
+
+
+
+
+
+
+
 
 HAL design
 ----------
