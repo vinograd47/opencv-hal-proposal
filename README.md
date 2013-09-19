@@ -31,7 +31,7 @@ HAL API
 -------
 
 OpenCV provides HAL interface description (as a C header file `hal_interface.h`).
-This headers will be used both in OpenCV and in HAL implementations.
+This header will be used both in OpenCV and in HAL implementations.
 
 HAL API is a set of functions prototypes.
 All funcions has plain C interface (no classes, no stl, no exceptions, etc.).
@@ -58,7 +58,7 @@ Also HAL doesn't have to support all input parameters (for example, interpolatio
 Each function can return `CV_HAL_NOT_IMPLEMENTED` error code for unsupported parameters.
 In this case OpenCV will use default implementation.
 
-The HAL API doesn't depend on OpenCV API. It has own types, macroses and constants definitions.
+The HAL API doesn't depend on OpenCV API. It has own types, macroses and constants definitions (like `CvHalMat`).
 
 In addition to input parameters all HAL functions accept `CvHalContext` struct, which contains some additional information like:
 * OpenCV version
@@ -66,22 +66,34 @@ In addition to input parameters all HAL functions accept `CvHalContext` struct, 
 * Information about CUDA device
 * CUDA stream id
 
+```C
+typedef struct _CvHalContext {
+    int opencv_version;
+
+    // OpenCV 3.0
+    int num_threads;
+
+    // OpenCV 3.1
+    cudaStream_t cuda_stream;
+} CvHalContext;
+```
+
 HAL API provides set of macroses for reading this parameters.
 We can add new entries to context in new OpenCV versions, so this macroses checks current OpenCV version and returns default values for old releases.
 
 ```C
 #define CV_HAL_GET_OPENCV_VERSION(context) \
-    ((context) ? (int) *(int*)((context) + CV_HAL_CONTEXT_IND_OPENCV_VERSION) : 0)
+    ((context) ? context->opencv_version : 0)
 
 // OpenCV 3.0
 
 #define CV_HAL_GET_NUM_THREADS(context) \
-    (CV_HAL_GET_OPENCV_VERSION(context) >= 300 ? *(int*)((context) + CV_HAL_CONTEXT_IND_NUM_THREADS) : -1)
+    (CV_HAL_GET_OPENCV_VERSION(context) >= 300 ? context->num_threads : -1)
 
 // OpenCV 3.1
 
 #define CV_HAL_GET_CUDA_STREAM(context) \
-    (CV_HAL_GET_OPENCV_VERSION(context) >= 310 ? (cudaStream_t) (context)[CV_HAL_CONTEXT_IND_CUDA_STREAM] : (cudaStream_t) 0)
+    (CV_HAL_GET_OPENCV_VERSION(context) >= 310 ? context->cuda_stream : (cudaStream_t) 0)
 ```
 
 
