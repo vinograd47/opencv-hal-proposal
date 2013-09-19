@@ -3,7 +3,13 @@
 #include <iostream>
 
 #if defined CV_HAL_DYNAMIC
-#   include <pthread.h>
+#   if (defined WIN32 || defined _WIN32) && !defined __CYGWIN__
+#       define WIN32_LEAN_AND_MEAN
+#       define NOMINMAX
+#       include <windows.h>
+#   else
+#       include <pthread.h>
+#   endif
 #   include "shared_library.hpp"
 #endif
 
@@ -129,9 +135,7 @@ void cv::loadHalImpl(const String& halLibName)
 
 namespace
 {
-    pthread_once_t once_control = PTHREAD_ONCE_INIT;
-
-    void init_routine()
+    void initPointersImpl()
     {
         // Read HAL name from enviroment variable.
         // It can be done it different ways (scan some directory,
@@ -151,7 +155,34 @@ namespace
 
 void cv::hal::detail::initPointers()
 {
-    pthread_once(&once_control, init_routine);
+#if (defined WIN32 || defined _WIN32) && !defined __CYGWIN__
+    static volatile int initialized = 0;
+    static HANDLE mtx;
+
+    if (!initialized)
+    {
+        if (!mtx)
+        {
+            HANDLE mymtx;
+            mymtx = CreateMutex(NULL, 0, NULL);
+            if (InterlockedCompareExchangePointer(&mtx, mymtx, NULL) != NULL)
+                CloseHandle(mymtx);
+        }
+
+        WaitForSingleObject(mtx);
+
+        if (!initialized)
+        {
+            initPointersImpl();
+            initialized = 1;
+        }
+
+        ReleaseMutex(mtx);
+    }
+#else
+    static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+    pthread_once(&once_control, initPointersImpl);
+#endif
 }
 
 cv::String cv::getHalInfo()
