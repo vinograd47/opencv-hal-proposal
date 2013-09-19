@@ -1,18 +1,7 @@
 OpenCV Hardware Acceleration Layer
 ==================================
 
-
-
-To test (Linux only)
---------------------
-
-1. Run `build_static_hal.sh`, `build_shared_hal.sh` and `build_no_hal.sh` scripts.
-2. Run `build/hal_user_static`. It will use statically-linked HAL.
-3. Run `build/hal_user_shared`. It won't use HAL.
-4. Run `build/hal_user_shared ./build/libhal_impl.so`. It will load HAL at runtime.
-5. Run `build/hal_user_no`. It won't use any HAL.
-
-
+This document describes design for the OpenCV Hardware Acceleration Layer (HAL) interface.
 
 HAL design
 ----------
