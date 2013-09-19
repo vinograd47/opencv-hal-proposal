@@ -16,7 +16,7 @@ OpenCV can be built in three different modes:
 * With statically-linked HAL. OpenCV will use accelerated function from this HAL.
 * With dynamically-loadable HAL support. OpenCV will try to load HAL implementation at runtime, if it fails OpenCV will use default implementation.
 
-OpenCV uses CMake options `HAL_MODE`, `STATIC_HAL_INCLUDE_DIR` and `STATIC_HAL_LIB`, which choose the mode and HAL library.
+OpenCV uses CMake options `HAL_MODE`, `STATIC_HAL_INCLUDE_DIR` and `STATIC_HAL_LIB`, which choose the mode and the HAL library.
 
 
 
@@ -134,10 +134,74 @@ OpenCV provides a template for this header - `hal_impl_templ.h`.
 HAL Layer
 ---------
 
-HAL Layer is a thin wrapper for HAL API (actually, it is a part of `core` module).
+HAL Layer is a thin С++ wrapper for HAL API (actually, it is a part of `core` module).
+It is used to hide differences between modes and provide simple API for OpenCV modules.
+It is designed to be as small as possible to avoid overhead from this layer.
+This wrappers are generated automatically from `hal_interface.h` header by scripts.
 
-OpenCV has C++ wrappers for HAL API (`hal.hpp` and `hal.cpp`),
-that converts OpenCV structures (Mat, vectors, etc.) to HAL types.
-All functions return boolean value, which indicates if HAL call was successfull or not.
+For each function in HAL API it provides an inline C++ wrapper, that calls corresponding function from HAL implementation.
+All this functions return boolean value, which indicates if HAL call was successfull or not.
+Also this wrapper-function converts OpenCV structures (`Mat`, `vector`, etc.) to HAL types and fill `CvHalContext` struct.
+
+If OpenCV was built without HAL support, all wrapper-functions return `false`.
+If OpenCV was built with statically-linked HAL and the HAL doesn't provide the implementation, the wrapper-function also returns `false`, otherwise it calls HAL implementation.
+If OpenCV was built with dynamically-loadable HAL support, the wrapper-function tries to load implementation at runtime.
+
+```C
+static inline bool resize(const Mat & src, const Mat & dst, int interpolation)
+{
+    (void) src;
+    (void) dst;
+    (void) interpolation;
+
+#if (defined CV_HAL_STATIC && !defined CV_HAL_HAS_RESIZE) || (!defined CV_HAL_STATIC && !defined CV_HAL_DYNAMIC)
+    return false;
+#else
+    #if defined CV_HAL_DYNAMIC
+        if (!detail::isInitialized)
+            detail::initPointers();
+
+        if (!detail::cvhal_resize_func_ptr)
+            return false;
+    #endif
+
+    CvHalStatus status;
+
+    CvHalMat hal_src = detail::toCvHalMat(src);
+    CvHalMat hal_dst = detail::toCvHalMat(dst);
+    CvHalContext context = detail::getContext();
+
+    #if defined CV_HAL_STATIC
+        status = cvhal_resize(&hal_src, &hal_dst, interpolation, &context);
+    #else
+        status = detail::cvhal_resize_func_ptr(&hal_src, &hal_dst, interpolation, &context);
+    #endif
+
+    return status == CV_HAL_SUCCESS;
+#endif
+}
+```
+
+Also the HAL Layer contains wrappers for inline functions from HAL implementation.
+This wrappers are used only for static build.
+
+```C
+static inline int round(double val)
+{
+#if defined CV_HAL_HAS_ROUND
+    return cvhal_round(val);
+#else
+    // default implementation
+    std::cout << "built-in round" << std::endl;
+    return cvRound(val);
+#endif
+}
+```
+
+ 
+
+OpenCV modules
+--------------
+
 If HAL fails OpenCV uses own implementation.
-This wrappers are generated automatically from `hal_interface.h` by scripts.
+
